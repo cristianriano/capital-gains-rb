@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 # require 'bundler/inline'
 
@@ -18,7 +19,6 @@ DATE_FORMAT = '%Y-%m-%d'
 file_name = ARGV[0] || raise('Please provide a file name')
 
 class Transaction
-
   attr_reader :type, :asset, :amount, :price, :total, :date
 
   def initialize(type, asset, amount, price, date)
@@ -51,12 +51,13 @@ class Transaction
   end
 
   def copy(amount)
-    Transaction.new(@type, @asset, @amount, @price, @date)
+    Transaction.new(@type, @asset, amount, @price, @date)
   end
 end
 
-movements_by_asset = Hash.new { |h, k| h[k] = [] }
-gains_per_year = Hash.new { |h, k| h[k] = 0 }
+def calculate_gain(purchase, sold)
+  sold.amount * (sold.price - purchase.price)
+end
 
 def calculate_remaining_transactions(sold, transanctions)
   new_transactions = []
@@ -65,12 +66,14 @@ def calculate_remaining_transactions(sold, transanctions)
   transanctions.each do |purchase|
     if sold.amount <= 0
       new_transactions << purchase
+      next
     elsif purchase.amount >= sold.amount
-      new_transactions << purchase.copy(purchase.amount - sold.amount)
-      gain += sold.amount * (purchase.price - sold.price)
+      new_amount = purchase.amount - sold.amount
+      new_transactions << purchase.copy(new_amount) if new_amount > 0
+      gain += calculate_gain(purchase, sold)
       sold = sold.copy(0)
     else
-      gain += purchase.total
+      gain += calculate_gain(purchase, sold)
       sold = sold.copy(sold.amount - purchase.amount)
     end
   end
@@ -78,23 +81,30 @@ def calculate_remaining_transactions(sold, transanctions)
   [new_transactions, gain]
 end
 
-CSV.foreach(file_name, headers: true) do |row|
-  type = row[TYPE]
-  next if IGNORED_TYPES.include?(type)
+def run(file)
+  movements_by_asset = Hash.new { |h, k| h[k] = [] }
+  gains_per_year = Hash.new { |h, k| h[k] = 0 }
 
-  case type
-  when 'buy'
-    purchase = Transaction.buy(row)
-    movements_by_asset[purchase.asset] << purchase
-  when 'sell'
-    sold = Transaction.sell(row)
-    new_transactions, gain = calculate_remaining_transactions(sold, movements_by_asset[sold.asset])
-    movements_by_asset[sold.asset] = new_transactions
-    gains_per_year[sold.date.year] += gain
-  when 'transfer'
-  else
-    println "Unknown type: #{type}"
+  CSV.foreach(file, headers: true) do |row|
+    type = row[TYPE]
+    next if IGNORED_TYPES.include?(type)
+
+    case type
+    when 'buy'
+      purchase = Transaction.buy(row)
+      movements_by_asset[purchase.asset] << purchase
+    when 'sell'
+      sold = Transaction.sell(row)
+      new_transactions, gain = calculate_remaining_transactions(sold, movements_by_asset[sold.asset])
+      movements_by_asset[sold.asset] = new_transactions
+      gains_per_year[sold.date.year] += gain
+    when 'transfer'
+    else
+      println "Unknown type: #{type}"
+    end
   end
+
+  [movements_by_asset, gains_per_year]
 end
 
-binding.pry
+# binding.pry
