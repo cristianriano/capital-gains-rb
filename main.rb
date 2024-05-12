@@ -96,11 +96,13 @@ def run(file)
       gains_per_year[sold.date.year] += gain
     when 'transfer'
     else
-      println "Unknown type: #{type}"
+      puts "Unknown type: #{type}"
     end
   end
 
   [movements_by_asset, gains_per_year]
 end
 
+movements_by_asset, gains_per_year = run(file_name)
+puts "Gain/losses per year #{gains_per_year}"
 # binding.pry
