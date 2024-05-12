@@ -3,7 +3,7 @@
 require_relative '../main'
 
 describe :main do
-  context 'when buying and selling' do
+  context 'when purchased only once' do
     it 'returns empty transactions when all was sold' do
       remaining, gains = run('spec/fixtures/sell_all.csv')
 
@@ -40,6 +40,16 @@ describe :main do
 
       expect(gains.count).to be(1)
       expect(gains[2021]).to be(-15.0)
+    end
+  end
+
+  context 'when multiple purchases' do
+    it 'returns empty transactions when all was sold' do
+      remaining, gains = run('spec/fixtures/multiple_sells.csv')
+
+      expect(remaining.values.flatten).to be_empty
+      expect(gains.count).to be(1)
+      expect(gains[2021]).to be(45.0)
     end
   end
 end

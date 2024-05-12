@@ -55,10 +55,6 @@ class Transaction
   end
 end
 
-def calculate_gain(purchase, sold)
-  sold.amount * (sold.price - purchase.price)
-end
-
 def calculate_remaining_transactions(sold, transanctions)
   new_transactions = []
   gain = 0
@@ -70,10 +66,10 @@ def calculate_remaining_transactions(sold, transanctions)
     elsif purchase.amount >= sold.amount
       new_amount = purchase.amount - sold.amount
       new_transactions << purchase.copy(new_amount) if new_amount > 0
-      gain += calculate_gain(purchase, sold)
+      gain += sold.amount * (sold.price - purchase.price)
       sold = sold.copy(0)
     else
-      gain += calculate_gain(purchase, sold)
+      gain += purchase.amount * (sold.price - purchase.price)
       sold = sold.copy(sold.amount - purchase.amount)
     end
   end
