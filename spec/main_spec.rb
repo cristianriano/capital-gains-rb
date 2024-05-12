@@ -51,5 +51,20 @@ describe :main do
       expect(gains.count).to be(1)
       expect(gains[2021]).to be(45.0)
     end
+
+    it 'returns remaining transactions when some was sold and loss' do
+      remaining, gains = run('spec/fixtures/multiple_sells_loss.csv')
+
+      expect(remaining.keys.count).to be(1)
+
+      res = remaining["S&P500"]
+      expect(res.count).to be(1)
+      expect(res.first.amount).to be(1.0)
+      expect(res.first.price).to be(40.0)
+      expect(res.first.total).to be(40.0)
+
+      expect(gains.count).to be(1)
+      expect(gains[2021]).to be(-50.0)
+    end
   end
 end
