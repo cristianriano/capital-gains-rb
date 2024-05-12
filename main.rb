@@ -9,57 +9,73 @@
 
 require 'csv'
 require 'pry'
+require 'date'
 
 TYPE = 'Transaction Type'
 IGNORED_TYPES = Set['deposit', 'withdrawal']
+DATE_FORMAT = '%Y-%m-%d'
 
 file_name = ARGV[0] || raise('Please provide a file name')
 
 class Transaction
 
-  attr_reader :type, :asset, :amount, :price, :total
+  attr_reader :type, :asset, :amount, :price, :total, :date
 
-  def initialize(type, asset, amount, price)
+  def initialize(type, asset, amount, price, date)
     @type = type
     @asset = asset
-    @amount = amount.to_f
-    @price = price.to_f
+    @amount = amount
+    @price = price
+    @date = date
     @total = @amount * @price
   end
 
   def self.buy(row)
-    new(:buy, row['Asset'], row['Amount Asset'], row['Asset market price'])
+    new(
+      :buy,
+      row['Asset'],
+      row['Amount Asset'].to_f,
+      row['Asset market price'].to_f,
+      Date.strptime(row['Timestamp'], DATE_FORMAT)
+    )
   end
 
   def self.sell(row)
-    new(:sell, row['Asset'], row['Amount Asset'], row['Asset market price'])
+    new(
+      :sell,
+      row['Asset'],
+      row['Amount Asset'].to_f,
+      row['Asset market price'].to_f,
+      Date.strptime(row['Timestamp'], DATE_FORMAT)
+    )
   end
 
-  def self.zero()
-    new(:sell, 'none', 0, 0)
+  def copy(amount)
+    Transaction.new(@type, @asset, @amount, @price, @date)
+  end
 end
 
 movements_by_asset = Hash.new { |h, k| h[k] = [] }
+gains_per_year = Hash.new { |h, k| h[k] = 0 }
 
 def calculate_remaining_transactions(sold, transanctions)
   new_transactions = []
   gain = 0
 
   transanctions.each do |purchase|
-    if sold.total <= 0
+    if sold.amount <= 0
       new_transactions << purchase
     elsif purchase.amount >= sold.amount
-      new_amount = purchase.amount - sold.amount
-      new_transactions << Transaction.buy(purchase.asset, new_amount, purchase.price)
+      new_transactions << purchase.copy(purchase.amount - sold.amount)
       gain += sold.amount * (purchase.price - sold.price)
-      sold = Transaction.zero()
+      sold = sold.copy(0)
     else
       gain += purchase.total
-      sold = Transaction.sell(sold.asset, sold.amount - purchase.amount, sold.price)
+      sold = sold.copy(sold.amount - purchase.amount)
     end
   end
 
-  new_transactions
+  [new_transactions, gain]
 end
 
 CSV.foreach(file_name, headers: true) do |row|
@@ -71,9 +87,14 @@ CSV.foreach(file_name, headers: true) do |row|
     purchase = Transaction.buy(row)
     movements_by_asset[purchase.asset] << purchase
   when 'sell'
-
+    sold = Transaction.sell(row)
+    new_transactions, gain = calculate_remaining_transactions(sold, movements_by_asset[sold.asset])
+    movements_by_asset[sold.asset] = new_transactions
+    gains_per_year[sold.date.year] += gain
   when 'transfer'
   else
     println "Unknown type: #{type}"
   end
 end
+
+binding.pry
