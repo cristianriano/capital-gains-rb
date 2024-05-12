@@ -34,9 +34,33 @@ class Transaction
   def self.sell(row)
     new(:sell, row['Asset'], row['Amount Asset'], row['Asset market price'])
   end
+
+  def self.zero()
+    new(:sell, 'none', 0, 0)
 end
 
 movements_by_asset = Hash.new { |h, k| h[k] = [] }
+
+def calculate_remaining_transactions(sold, transanctions)
+  new_transactions = []
+  gain = 0
+
+  transanctions.each do |purchase|
+    if sold.total <= 0
+      new_transactions << purchase
+    elsif purchase.amount >= sold.amount
+      new_amount = purchase.amount - sold.amount
+      new_transactions << Transaction.buy(purchase.asset, new_amount, purchase.price)
+      gain += sold.amount * (purchase.price - sold.price)
+      sold = Transaction.zero()
+    else
+      gain += purchase.total
+      sold = Transaction.sell(sold.asset, sold.amount - purchase.amount, sold.price)
+    end
+  end
+
+  new_transactions
+end
 
 CSV.foreach(file_name, headers: true) do |row|
   type = row[TYPE]
@@ -44,11 +68,10 @@ CSV.foreach(file_name, headers: true) do |row|
 
   case type
   when 'buy'
-    transaction = Transaction.buy(row)
-    movements_by_asset[transaction.asset] << transaction
+    purchase = Transaction.buy(row)
+    movements_by_asset[purchase.asset] << purchase
   when 'sell'
-    transaction = Transaction.sell(row)
-    movements_by_asset[transaction.asset] << transaction
+
   when 'transfer'
   else
     println "Unknown type: #{type}"
