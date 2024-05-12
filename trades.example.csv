@@ -1,0 +1,6 @@
+"Transaction ID",Timestamp,"Transaction Type",In/Out,"Amount Fiat",Fiat,"Amount Asset",Asset,"Asset market price","Asset market price currency","Asset class","Product ID",Fee,"Fee asset",Spread,"Spread Currency","Tax Fiat"
+Fbaed925a-3ec2-4d69-95de-4cd435c7b98e,2021-06-08T11:03:56+02:00,deposit,incoming,300.00,EUR,-,EUR,-,-,Fiat,-,0.00000000,EUR,-,-,0.00
+T423e8b2e-b3df-4d5d-a468-2d6757c204bd,2021-06-25T20:29:46+02:00,buy,outgoing,200.00,EUR,5.58651395,S&P500,35.80,EUR,"ETF (derivative)",116,-,-,0.50000000,EUR,0.00
+Taaeee892-6063-4288-89c0-629ae6a4a596,2021-08-22T16:59:34+02:00,sell,incoming,150.00,EUR,8.52763248,S&P500,37.76,EUR,"ETF (derivative)",116,-,-,0.81000000,EUR,0.00
+C057390a9-0038-4f17-b923-35e8c326dd75,2021-08-31T21:09:59+02:00,withdrawal,outgoing,0,EUR,0.00000000,BEST,0.00,-,Cryptocurrency,33,0.02313201,BEST,-,-,-
+7242fc29-2cc8-4746-b269-77371afac2ca,2021-09-01T13:59:55+02:00,transfer,incoming,0.05,EUR,0.05642164,BEST,0.85,EUR,Cryptocurrency,33,-,-,-,-,-
