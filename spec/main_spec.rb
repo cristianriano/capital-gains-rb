@@ -11,5 +11,35 @@ describe :main do
       expect(gains.count).to be(1)
       expect(gains[2021]).to be(27.5)
     end
+
+    it 'returns remaining asset when some was sold' do
+      remaining, gains = run('spec/fixtures/sell_some.csv')
+
+      expect(remaining.keys.count).to be(1)
+
+      res = remaining["S&P500"]
+      expect(res.count).to be(1)
+      expect(res.first.amount).to be(3.0)
+      expect(res.first.price).to be(35.0)
+      expect(res.first.total).to be(105.0)
+
+      expect(gains.count).to be(1)
+      expect(gains[2021]).to be(12.5)
+    end
+
+    it 'returns remaining asset when some was sold and loss' do
+      remaining, gains = run('spec/fixtures/sell_some_loss.csv')
+
+      expect(remaining.keys.count).to be(1)
+
+      res = remaining["S&P500"]
+      expect(res.count).to be(1)
+      expect(res.first.amount).to be(2.5)
+      expect(res.first.price).to be(35.0)
+      expect(res.first.total).to be(87.5)
+
+      expect(gains.count).to be(1)
+      expect(gains[2021]).to be(-15.0)
+    end
   end
 end
